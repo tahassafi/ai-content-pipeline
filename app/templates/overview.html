@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<div class="pagehead"><h1>Overview</h1></div>
+
+<div class="stats">
+  <div class="card stat"><span class="num">{{ stats.drafts }}</span><span class="lbl">Drafts</span></div>
+  <div class="card stat"><span class="num">{{ stats.scheduled }}</span><span class="lbl">Scheduled</span></div>
+  <div class="card stat"><span class="num">{{ stats.published }}</span><span class="lbl">Published</span></div>
+  <div class="card stat"><span class="num">{{ stats.replies_sent }}</span><span class="lbl">Replies sent</span></div>
+  <div class="card stat"><span class="num">{{ stats.replies_pending }}</span><span class="lbl">Replies pending</span></div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Recent posts</h2>
+    {% for p in recent_posts %}
+    <div class="row" style="padding:.45rem 0;border-bottom:1px solid var(--line)">
+      {% if p['media_file'] and p['media_type'] == 'image' %}
+        <img src="/media/{{ p['media_file'] }}" style="width:44px;height:44px;border-radius:8px;object-fit:cover">
+      {% else %}<span class="chip" style="background:#555;width:44px;height:44px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff">{{ '▶' if p['media_file'] else '🔗' }}</span>{% endif %}
+      <div style="flex:1">
+        <div style="font-size:.85rem"><b>{{ (brands[p['brand']].name if p['brand'] in brands else p['brand'])|default('') }}</b> · #{{ p['id'] }} · {{ p['platforms'] }}</div>
+        <div class="muted">{{ p['created_at'] }}</div>
+      </div>
+      <span class="badge b-{{ p['status'] }}">{{ p['status'] }}</span>
+    </div>
+    {% else %}<div class="muted">No posts yet. Pick a platform on the left to create one.</div>{% endfor %}
+  </div>
+
+  <div class="card">
+    <h2>Recent comment replies</h2>
+    {% for r in recent_replies %}
+    <div style="padding:.45rem 0;border-bottom:1px solid var(--line)">
+      <div class="row" style="justify-content:space-between">
+        <b style="font-size:.84rem">{{ r['commenter'] or 'unknown' }} · {{ r['platform'] }} · {{ (brands[r['brand']].name if r['brand'] in brands else r['brand'])|default('') }}</b>
+        <span class="badge b-{{ r['status'] }}">{{ r['status'] }}</span>
+      </div>
+      <div class="muted" style="margin:.15rem 0">“{{ r['comment_text'][:110] }}”</div>
+      {% if r['reply_text'] %}<div style="font-size:.84rem">↪ {{ r['reply_text'][:110] }}</div>{% endif %}
+    </div>
+    {% else %}<div class="muted">No comments handled yet.</div>{% endfor %}
+  </div>
+</div>
+{% endblock %}

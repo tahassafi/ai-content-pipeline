@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}DMs{% endblock %}
+{% block content %}
+<div class="pagehead"><h1>Direct messages</h1>
+  <span class="muted">Mode: <b>{{ reply_mode }}</b> — unserious/spam/consign messages are auto-skipped</span>
+</div>
+
+<div class="card">
+  <form method="get" action="/dms" class="row" style="gap:.7rem">
+    <select name="brand" class="filter">
+      <option value="">All brands</option>
+      {% for bk, b in brands.items() %}
+      <option value="{{ bk }}" {{ 'selected' if f_brand==bk }}>{{ b.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="platform" class="filter">
+      <option value="">All sources</option>
+      {% for s in ['instagram','facebook','marketplace'] %}
+      <option value="{{ s }}" {{ 'selected' if f_platform==s }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="status" class="filter">
+      <option value="">All statuses</option>
+      {% for s in ['pending','sent','skipped','rejected','failed'] %}
+      <option value="{{ s }}" {{ 'selected' if f_status==s }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="range" class="filter">
+      <option value="today" {{ 'selected' if f_range=='today' }}>Today</option>
+      <option value="7d" {{ 'selected' if f_range=='7d' }}>Last 7 days</option>
+      <option value="30d" {{ 'selected' if f_range=='30d' }}>Last 30 days</option>
+      <option value="all" {{ 'selected' if f_range=='all' }}>All time</option>
+    </select>
+    <input type="text" name="q" value="{{ f_q }}" placeholder="Search messages…" style="width:180px">
+    <button class="btn-primary">Filter</button>
+    <a href="/dms" class="btn btn-ghost" style="display:inline-block;padding:.55rem 1rem">Reset</a>
+  </form>
+  <div class="row" style="margin-top:.7rem;gap:.4rem">
+    {% for s in ['pending','sent','skipped','rejected','failed'] %}
+    {% if counts.get(s) %}<span class="badge b-{{ s }}">{{ s }}: {{ counts[s] }}</span>{% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<form method="post" action="/dms/bulk">
+<div class="card" style="overflow-x:auto">
+  <div class="row" style="margin-bottom:.7rem">
+    <label class="muted" style="display:flex;align-items:center;gap:.4rem">
+      <input type="checkbox" onclick="document.querySelectorAll('.rowcheck').forEach(c=>c.checked=this.checked)"> Select all pending
+    </label>
+    <button name="action" value="send" class="btn-green"
+      onclick="return confirm('Send all selected DM replies?')">Approve &amp; send selected</button>
+    <button name="action" value="reject" class="btn-danger"
+      onclick="return confirm('Reject selected?')">Reject selected</button>
+  </div>
+  <table>
+    <tr><th></th><th>Brand</th><th>Source</th><th>From</th><th>Message</th><th>Product</th><th>AI reply</th><th>When</th><th>Status</th></tr>
+    {% for d in dms %}
+    <tr>
+      <td>{% if d['status'] == 'pending' %}
+        <input type="checkbox" name="message_ids" value="{{ d['message_id'] }}" class="rowcheck">{% endif %}</td>
+      <td>{{ brands[d['brand']].name if d['brand'] in brands else d['brand'] }}</td>
+      <td>{{ d['platform'] }}</td>
+      <td style="white-space:nowrap">{{ d['sender_name'] or d['sender_id'][:10] }}</td>
+      <td style="max-width:220px">{{ d['message_text'][:180] }}</td>
+      <td style="max-width:120px" class="muted">{{ d['product'][:60] }}</td>
+      <td style="max-width:240px">{{ d['reply_text'] or '—' }}</td>
+      <td class="muted" style="white-space:nowrap">{{ d['created_at'][5:16] }}</td>
+      <td><span class="badge b-{{ d['status'] }}">{{ d['status'] }}</span>
+          {% if d['error'] %}<div class="muted" style="max-width:150px">{{ d['error'][:90] }}</div>{% endif %}</td>
+    </tr>
+    {% else %}<tr><td colspan="9" class="muted">No DMs yet — they'll appear once Meta messaging webhooks are live.</td></tr>{% endfor %}
+  </table>
+</div>
+</form>
+{% endblock %}
+{% block head %}<style>select.filter{padding:.55rem .6rem;border:1px solid var(--line);border-radius:10px;font-size:.87rem;background:#fbfbfd;color:var(--txt)}.b-rejected{background:#fde5e9;color:#b22745}</style>{% endblock %}

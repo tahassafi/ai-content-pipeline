@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}{{ bmeta.name }} — Instagram{% endblock %}
+{% block content %}
+<div class="pagehead">
+  <h1><span class="chip" style="background:#E1306C;width:32px;height:32px;color:#fff;border-radius:9px;display:inline-flex;align-items:center;justify-content:center">IG</span>
+  {{ bmeta.name }} · Instagram</h1>
+  <span class="muted">Captions only — copy and post manually in the Instagram app</span>
+</div>
+
+{% if warn and warn.startswith('tiktok-dup') %}
+<div class="card" style="border-color:#f0c36d;background:#fff8e8">
+  <b>⚠ TikTok skipped:</b> this content already has a TikTok post under <b>{{ warn.split('-')[-1]|title }}</b>.
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>New Instagram caption</h2>
+  <form method="post" action="/upload" enctype="multipart/form-data"
+        onsubmit="const b=this.querySelector('.btn-primary'); if(b.disabled) return false; b.disabled=true; b.textContent='Generating… (takes ~15s)';">
+    <input type="hidden" name="origin" value="/b/{{ brand }}/instagram">
+    <input type="hidden" name="brand" value="{{ brand }}">
+    <input type="hidden" name="platforms" value="instagram">
+    <div class="row" style="margin-bottom:.7rem">
+      <div style="flex:1;min-width:220px">
+        <div class="muted" style="margin-bottom:.25rem">Car page link (pulls specs &amp; price from your website database)</div>
+        <input type="text" name="url" placeholder="https://your-dealership.com/car-listing/...">
+      </div>
+      <div>
+        <div class="muted" style="margin-bottom:.25rem">Post type</div>
+        <select name="post_type" style="padding:.6rem .7rem;border:1px solid var(--line);border-radius:10px;font-size:.9rem;background:#fbfbfd">
+          <option value="carousel">Carousel (listing format)</option>
+          <option value="reel">Reel</option>
+          <option value="image">Image post</option>
+        </select>
+      </div>
+    </div>
+    <label class="dropzone" id="dz">
+      <input type="file" name="file" accept="image/*,video/*"
+             onchange="document.getElementById('dz-label').textContent = this.files[0] ? this.files[0].name : 'Optional: photo or video frame (helps the AI see the car)'">
+      <div id="dz-label">Optional: photo or video frame (helps the AI see the car)</div>
+    </label>
+    <textarea name="notes" style="min-height:60px" placeholder="Extra notes (optional) — e.g. 'partner collab post', 'just arrived'"></textarea>
+    <div style="margin-top:.7rem"><button class="btn-primary" type="submit">Generate caption</button></div>
+  </form>
+</div>
+
+{% for p in posts %}
+<div class="card">
+  <div class="row" style="align-items:flex-start">
+    <div>
+      {% if p['media_file'] and p['media_type'] == 'image' %}<img class="thumb" src="/media/{{ p['media_file'] }}">
+      {% elif p['media_file'] %}<video class="thumb" src="/media/{{ p['media_file'] }}" controls muted></video>
+      {% else %}<div class="thumb" style="display:flex;align-items:center;justify-content:center;background:#eef0f6;color:#8a90a8;font-size:1.6rem">🔗</div>{% endif %}
+      <div class="muted" style="margin-top:.4rem">#{{ p['id'] }} · {{ p['created_at'][5:16] }}</div>
+      <span class="badge" style="background:#eef0f6;color:#555c74">{{ p['post_type'] or 'image' }}</span>
+      {% if p['source_url'] %}<div class="muted" style="margin-top:.3rem"><a href="{{ p['source_url'] }}" target="_blank" style="color:var(--accent)">car page ↗</a></div>{% endif %}
+    </div>
+    <div style="flex:1;min-width:280px">
+      <form method="post" action="/posts/{{ p['id'] }}/save">
+        <input type="hidden" name="origin" value="/b/{{ brand }}/instagram">
+        <div class="row" style="justify-content:space-between;margin-bottom:.3rem">
+          <b style="font-size:.85rem;color:#E1306C">Instagram caption</b>
+          <button type="button" class="btn-ghost" style="padding:.3rem .6rem" onclick="copyText(this,'ig{{ p['id'] }}')">Copy</button>
+        </div>
+        <textarea id="ig{{ p['id'] }}" name="caption_ig" style="min-height:{{ '220px' if p['post_type'] == 'carousel' else '110px' }}"
+          oninput="countChars(this,'igc{{ p['id'] }}',2200)">{{ p['caption_ig'] }}</textarea>
+        <div class="charcount" id="igc{{ p['id'] }}">{{ p['caption_ig']|length }} / 2200</div>
+        <div class="row" style="margin-top:.5rem">
+          <button class="btn-ghost" name="action" value="save">Save edits</button>
+        </div>
+      </form>
+      <div class="row" style="margin-top:.55rem">
+        <form method="post" action="/posts/{{ p['id'] }}/regen">
+          <input type="hidden" name="origin" value="/b/{{ brand }}/instagram">
+          <input type="hidden" name="platform" value="instagram">
+          <button class="btn-soft">↻ Regenerate</button>
+        </form>
+        <form method="post" action="/posts/{{ p['id'] }}/delete"
+              onsubmit="return confirm('Delete this?')">
+          <input type="hidden" name="origin" value="/b/{{ brand }}/instagram">
+          <button class="btn-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card muted">No captions yet — generate one above.</div>
+{% endfor %}
+{% endblock %}

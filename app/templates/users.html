@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="pagehead"><h1>User accounts</h1></div>
+
+{% if error %}
+<div class="card" style="border-color:#e8a0ae;background:#fdf0f2"><b>⚠ {{ error }}</b></div>
+{% endif %}
+
+<div class="card">
+  <h2>Create account</h2>
+  <form method="post" action="/users/create" class="row" style="gap:.7rem">
+    <input type="text" name="username" placeholder="username" required style="width:160px">
+    <input type="password" name="password" placeholder="password (8+ chars)" required style="width:200px">
+    <select name="role" style="padding:.6rem .7rem;border:1px solid var(--line);border-radius:10px;background:#fbfbfd">
+      <option value="editor">Editor</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button class="btn-primary">Create</button>
+  </form>
+  <div class="muted" style="margin-top:.6rem">Editors can use everything except this page. Admins can also manage users. Every sign-in and action is recorded in the Activity log under the username.</div>
+</div>
+
+<div class="card">
+  <table>
+    <tr><th>Username</th><th>Role</th><th>Created</th><th></th></tr>
+    {% for u in users %}
+    <tr>
+      <td><b>{{ u['username'] }}</b></td>
+      <td><span class="badge {{ 'b-sent' if u['role']=='admin' else 'b-skipped' }}">{{ u['role'] }}</span></td>
+      <td class="muted">{{ u['created_at'][:16] }}</td>
+      <td>
+        <form method="post" action="/users/{{ u['id'] }}/delete"
+              onsubmit="return confirm('Delete user {{ u['username'] }}?')">
+          <button class="btn-danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}<tr><td colspan="4" class="muted">No accounts yet — only the master password works. Create accounts above so each person has their own trail.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

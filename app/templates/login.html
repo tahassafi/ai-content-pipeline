@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Social Agent — Login</title>
+<style>
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#12141f;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+form{background:#fff;padding:2.2rem;border-radius:16px;width:320px;box-shadow:0 8px 40px rgba(0,0,0,.35)}
+h1{font-size:1.15rem;margin:0 0 .3rem;color:#1a1d29}
+h1 span{color:#2d5bff}
+p{color:#6b7085;font-size:.85rem;margin:0 0 1.2rem}
+input,button{width:100%;padding:.75rem;border-radius:10px;border:1px solid #e6e8f0;box-sizing:border-box;font-size:1rem;font-family:inherit}
+input{margin-bottom:1rem}
+input:focus{outline:2px solid #eaefff;border-color:#2d5bff}
+button{background:#2d5bff;color:#fff;border:none;cursor:pointer;font-weight:600}
+.err{color:#b22745;margin-bottom:1rem;font-size:.85rem}
+</style></head><body>
+<form method="post" action="/login">
+  <h1>Social<span>Agent</span></h1>
+  <p>Multi-brand social media agent</p>
+  {% if error %}<div class="err">{{ error }}</div>{% endif %}
+  <input type="text" name="username" placeholder="Username (leave empty for master)" autofocus>
+  <input type="password" name="password" placeholder="Password">
+  <button type="submit">Log in</button>
+</form>
+</body></html>

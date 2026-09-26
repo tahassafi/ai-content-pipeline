@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ bmeta.name }} — TikTok{% endblock %}
+{% block content %}
+<div class="pagehead">
+  <h1><span class="chip" style="background:#00c3b5;width:32px;height:32px;color:#fff;border-radius:9px;display:inline-flex;align-items:center;justify-content:center">TT</span>
+  {{ bmeta.name }} · TikTok</h1>
+  <span class="muted">Captions only — copy and paste when you upload in TikTok</span>
+</div>
+
+{% if warn and warn.startswith('tiktok-dup') %}
+<div class="card" style="border-color:#f0c36d;background:#fff8e8">
+  <b>⚠ TikTok blocked:</b> this content already has a TikTok post under
+  <b>{{ warn.split('-')[-1]|title }}</b>. TikTok penalises the same content on two accounts.
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>New TikTok caption</h2>
+  <form method="post" action="/upload" enctype="multipart/form-data"
+        onsubmit="const b=this.querySelector('.btn-primary'); if(b.disabled) return false; b.disabled=true; b.textContent='Generating… (takes ~15s)';">
+    <input type="hidden" name="origin" value="/b/{{ brand }}/tiktok">
+    <input type="hidden" name="brand" value="{{ brand }}">
+    <input type="hidden" name="platforms" value="tiktok">
+    <input type="hidden" name="post_type" value="video">
+    <div style="margin-bottom:.7rem">
+      <div class="muted" style="margin-bottom:.25rem">Car page link (AI reads specs &amp; grabs the photo)</div>
+      <input type="text" name="url" placeholder="https://your-dealership.com/car-listing/...">
+    </div>
+    <label class="dropzone" id="dz">
+      <input type="file" name="file" accept="image/*,video/*"
+             onchange="document.getElementById('dz-label').textContent = this.files[0] ? this.files[0].name : 'Optional: photo or a video frame (helps the AI see the car)'">
+      <div id="dz-label">Optional: photo or a video frame (helps the AI see the car)</div>
+    </label>
+    <textarea name="notes" style="min-height:60px" placeholder="Notes about the video — what's shown, mood, anything to mention"></textarea>
+    <div style="margin-top:.7rem"><button class="btn-primary" type="submit">Generate caption</button></div>
+  </form>
+</div>
+
+{% for p in posts %}
+<div class="card">
+  <div class="row" style="align-items:flex-start">
+    <div>
+      {% if p['media_file'] and p['media_type'] == 'image' %}<img class="thumb" src="/media/{{ p['media_file'] }}">
+      {% elif p['media_file'] %}<video class="thumb" src="/media/{{ p['media_file'] }}" controls muted></video>
+      {% else %}<div class="thumb" style="display:flex;align-items:center;justify-content:center;background:#eef0f6;color:#8a90a8;font-size:1.6rem">🔗</div>{% endif %}
+      <div class="muted" style="margin-top:.4rem">#{{ p['id'] }} · {{ p['created_at'][5:16] }}</div>
+      {% if p['source_url'] %}<div class="muted" style="margin-top:.3rem"><a href="{{ p['source_url'] }}" target="_blank" style="color:var(--accent)">car page ↗</a></div>{% endif %}
+    </div>
+    <div style="flex:1;min-width:280px">
+      <form method="post" action="/posts/{{ p['id'] }}/save">
+        <input type="hidden" name="origin" value="/b/{{ brand }}/tiktok">
+        <div class="row" style="justify-content:space-between;margin-bottom:.3rem">
+          <b style="font-size:.85rem;color:#00a99d">TikTok caption</b>
+          <button type="button" class="btn-ghost" style="padding:.3rem .6rem" onclick="copyText(this,'tt{{ p['id'] }}')">Copy</button>
+        </div>
+        <textarea id="tt{{ p['id'] }}" name="caption_tt" style="min-height:90px"
+          oninput="countChars(this,'ttc{{ p['id'] }}',4000)">{{ p['caption_tt'] }}</textarea>
+        <div class="charcount" id="ttc{{ p['id'] }}">{{ p['caption_tt']|length }} / 4000 (text part under 150)</div>
+        <div class="row" style="margin-top:.5rem">
+          <button class="btn-ghost" name="action" value="save">Save edits</button>
+        </div>
+      </form>
+      <div class="row" style="margin-top:.55rem">
+        <form method="post" action="/posts/{{ p['id'] }}/regen">
+          <input type="hidden" name="origin" value="/b/{{ brand }}/tiktok">
+          <input type="hidden" name="platform" value="tiktok">
+          <button class="btn-soft">↻ Regenerate</button>
+        </form>
+        <form method="post" action="/posts/{{ p['id'] }}/delete"
+              onsubmit="return confirm('Delete?')">
+          <input type="hidden" name="origin" value="/b/{{ brand }}/tiktok">
+          <button class="btn-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card muted">Nothing yet — generate your first TikTok caption above.</div>
+{% endfor %}
+{% endblock %}

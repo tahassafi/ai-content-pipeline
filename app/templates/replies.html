@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Replies{% endblock %}
+{% block content %}
+<div class="pagehead"><h1>Comment replies</h1>
+  <span class="muted">Mode: <b>{{ reply_mode }}</b></span>
+</div>
+
+<!-- filters -->
+<div class="card">
+  <form method="get" action="/replies" class="row" style="gap:.7rem">
+    <select name="brand" class="filter">
+      <option value="">All brands</option>
+      {% for bk, b in brands.items() %}
+      <option value="{{ bk }}" {{ 'selected' if f_brand==bk }}>{{ b.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="platform" class="filter">
+      <option value="">All platforms</option>
+      {% for pk, pm in platforms_meta.items() %}
+      <option value="{{ pk }}" {{ 'selected' if f_platform==pk }}>{{ pm.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="status" class="filter">
+      <option value="">All statuses</option>
+      {% for s in ['pending','sent','skipped','rejected','failed'] %}
+      <option value="{{ s }}" {{ 'selected' if f_status==s }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="range" class="filter">
+      <option value="today" {{ 'selected' if f_range=='today' }}>Today</option>
+      <option value="7d" {{ 'selected' if f_range=='7d' }}>Last 7 days</option>
+      <option value="30d" {{ 'selected' if f_range=='30d' }}>Last 30 days</option>
+      <option value="all" {{ 'selected' if f_range=='all' }}>All time</option>
+    </select>
+    <input type="text" name="q" value="{{ f_q }}" placeholder="Search comments…" style="width:180px">
+    <button class="btn-primary">Filter</button>
+    <a href="/replies" class="btn btn-ghost" style="display:inline-block;padding:.55rem 1rem">Reset</a>
+  </form>
+  <div class="row" style="margin-top:.7rem;gap:.4rem">
+    {% for s in ['pending','sent','skipped','rejected','failed'] %}
+    {% if counts.get(s) %}<span class="badge b-{{ s }}">{{ s }}: {{ counts[s] }}</span>{% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<!-- bulk actions + table -->
+<form method="post" action="/replies/bulk" id="bulkform">
+<div class="card" style="overflow-x:auto">
+  <div class="row" style="margin-bottom:.7rem">
+    <label class="muted" style="display:flex;align-items:center;gap:.4rem">
+      <input type="checkbox" onclick="toggleAll(this)"> Select all pending
+    </label>
+    <button name="action" value="send" class="btn-green"
+      onclick="return confirm('Send all selected replies?')">Approve &amp; send selected</button>
+    <button name="action" value="reject" class="btn-danger"
+      onclick="return confirm('Reject selected? They will never be sent.')">Reject selected</button>
+    <span class="muted" id="selcount"></span>
+  </div>
+  <table>
+    <tr><th></th><th>Brand</th><th>Platform</th><th>From</th><th>Comment</th><th>AI reply</th><th>When</th><th>Status</th></tr>
+    {% for r in replies %}
+    <tr>
+      <td>{% if r['status'] == 'pending' %}
+        <input type="checkbox" name="comment_ids" value="{{ r['comment_id'] }}" class="rowcheck"
+               onchange="updateCount()">{% endif %}</td>
+      <td>{{ brands[r['brand']].name if r['brand'] in brands else r['brand'] }}</td>
+      <td><span class="chip" style="background:{{ platforms_meta[r['platform']].color if r['platform'] in platforms_meta else '#888' }};font-size:.55rem">{{ platforms_meta[r['platform']].icon if r['platform'] in platforms_meta else r['platform'][:2]|upper }}</span></td>
+      <td style="white-space:nowrap">{{ r['commenter'] or '—' }}</td>
+      <td style="max-width:240px">{{ r['comment_text'][:200] }}</td>
+      <td style="max-width:260px">{{ r['reply_text'] or '—' }}</td>
+      <td class="muted" style="white-space:nowrap">{{ r['created_at'][5:16] }}</td>
+      <td><span class="badge b-{{ r['status'] }}">{{ r['status'] }}</span>
+          {% if r['error'] %}<div class="muted" style="max-width:160px">{{ r['error'][:100] }}</div>{% endif %}</td>
+    </tr>
+    {% else %}<tr><td colspan="8" class="muted">Nothing matches these filters.</td></tr>{% endfor %}
+  </table>
+</div>
+</form>
+{% endblock %}
+
+{% block head %}
+<style>
+select.filter{padding:.55rem .6rem;border:1px solid var(--line);border-radius:10px;font-size:.87rem;background:#fbfbfd;color:var(--txt)}
+.b-rejected{background:#fde5e9;color:#b22745}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleAll(box){
+  document.querySelectorAll('.rowcheck').forEach(c => c.checked = box.checked);
+  updateCount();
+}
+function updateCount(){
+  const n = document.querySelectorAll('.rowcheck:checked').length;
+  document.getElementById('selcount').textContent = n ? n + ' selected' : '';
+}
+</script>
+{% endblock %}

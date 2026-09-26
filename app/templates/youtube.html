@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ bmeta.name }} — YouTube{% endblock %}
+{% block content %}
+<div class="pagehead">
+  <h1><span class="chip" style="background:#FF0000;width:32px;height:32px;color:#fff;border-radius:9px;display:inline-flex;align-items:center;justify-content:center">YT</span>
+  {{ bmeta.name }} · YouTube</h1>
+  <span class="muted">Shorts get a compact format; long videos get the full SEO description</span>
+</div>
+
+<div class="card">
+  <h2>New YouTube title + description + tags</h2>
+  <form method="post" action="/upload" enctype="multipart/form-data"
+        onsubmit="const b=this.querySelector('.btn-primary'); if(b.disabled) return false; b.disabled=true; b.textContent='Generating… (takes ~20s)';">
+    <input type="hidden" name="origin" value="/b/{{ brand }}/youtube">
+    <input type="hidden" name="brand" value="{{ brand }}">
+    <input type="hidden" name="platforms" value="youtube">
+    <div class="row" style="margin-bottom:.7rem">
+      <div style="flex:1;min-width:220px">
+        <div class="muted" style="margin-bottom:.25rem">Car page link (AI reads specs &amp; grabs the photo)</div>
+        <input type="text" name="url" placeholder="https://your-dealership.com/car-listing/...">
+      </div>
+      <div>
+        <div class="muted" style="margin-bottom:.25rem">Format</div>
+        <select name="post_type" style="padding:.6rem .7rem;border:1px solid var(--line);border-radius:10px;font-size:.9rem;background:#fbfbfd">
+          <option value="reel">Short (compact format)</option>
+          <option value="video">Long video (full SEO description)</option>
+        </select>
+      </div>
+    </div>
+    <label class="dropzone" id="dz">
+      <input type="file" name="file" accept="image/*,video/*"
+             onchange="document.getElementById('dz-label').textContent = this.files[0] ? this.files[0].name : 'Optional: photo or a video frame (helps the AI see the car)'">
+      <div id="dz-label">Optional: photo or a video frame (helps the AI see the car)</div>
+    </label>
+    <textarea name="notes" style="min-height:60px" placeholder="Notes about the video — what's shown, walkaround/interior/drive, anything to mention"></textarea>
+    <div style="margin-top:.7rem"><button class="btn-primary" type="submit">Generate</button></div>
+  </form>
+</div>
+
+{% for p in posts %}
+<div class="card">
+  <div class="row" style="align-items:flex-start">
+    <div>
+      {% if p['media_file'] and p['media_type'] == 'image' %}<img class="thumb" src="/media/{{ p['media_file'] }}">
+      {% elif p['media_file'] %}<video class="thumb" src="/media/{{ p['media_file'] }}" controls muted></video>
+      {% else %}<div class="thumb" style="display:flex;align-items:center;justify-content:center;background:#eef0f6;color:#8a90a8;font-size:1.6rem">🔗</div>{% endif %}
+      <div class="muted" style="margin-top:.4rem">#{{ p['id'] }} · {{ p['created_at'][5:16] }}</div>
+      <span class="badge" style="background:#eef0f6;color:#555c74">{{ 'Short' if p['post_type'] == 'reel' else 'Long video' }}</span>
+      {% if p['source_url'] %}<div class="muted" style="margin-top:.3rem"><a href="{{ p['source_url'] }}" target="_blank" style="color:var(--accent)">car page ↗</a></div>{% endif %}
+    </div>
+    <div style="flex:1;min-width:280px">
+      <form method="post" action="/posts/{{ p['id'] }}/save">
+        <input type="hidden" name="origin" value="/b/{{ brand }}/youtube">
+        <div class="row" style="justify-content:space-between;margin-bottom:.3rem">
+          <b style="font-size:.83rem;color:#c00">Title</b>
+          <button type="button" class="btn-ghost" style="padding:.3rem .6rem" onclick="copyText(this,'ytt{{ p['id'] }}')">Copy</button>
+        </div>
+        <textarea id="ytt{{ p['id'] }}" name="yt_title" style="min-height:40px"
+          oninput="countChars(this,'yttc{{ p['id'] }}',100)">{{ p['yt']['title'] }}</textarea>
+        <div class="charcount" id="yttc{{ p['id'] }}">{{ p['yt']['title']|length }} / 100</div>
+
+        <div class="row" style="justify-content:space-between;margin:.5rem 0 .3rem">
+          <b style="font-size:.83rem;color:#c00">Description</b>
+          <button type="button" class="btn-ghost" style="padding:.3rem .6rem" onclick="copyText(this,'ytd{{ p['id'] }}')">Copy</button>
+        </div>
+        <textarea id="ytd{{ p['id'] }}" name="yt_desc" style="min-height:{{ '90px' if p['post_type'] == 'reel' else '180px' }}"
+          oninput="countChars(this,'ytdc{{ p['id'] }}',5000)">{{ p['yt']['desc'] }}</textarea>
+        <div class="charcount" id="ytdc{{ p['id'] }}">{{ p['yt']['desc']|length }} / 5000{{ ' (Shorts target 300-500)' if p['post_type'] == 'reel' }}</div>
+
+        <div class="row" style="justify-content:space-between;margin:.5rem 0 .3rem">
+          <b style="font-size:.83rem;color:#c00">Tags</b>
+          <button type="button" class="btn-ghost" style="padding:.3rem .6rem" onclick="copyText(this,'ytg{{ p['id'] }}')">Copy</button>
+        </div>
+        <textarea id="ytg{{ p['id'] }}" name="yt_tags" style="min-height:60px"
+          oninput="countChars(this,'ytgc{{ p['id'] }}',500)">{{ p['yt']['tags'] }}</textarea>
+        <div class="charcount" id="ytgc{{ p['id'] }}">{{ p['yt']['tags']|length }} / 500</div>
+
+        <div class="row" style="margin-top:.5rem">
+          <button class="btn-ghost" name="action" value="save">Save edits</button>
+        </div>
+      </form>
+      <div class="row" style="margin-top:.55rem">
+        <form method="post" action="/posts/{{ p['id'] }}/regen">
+          <input type="hidden" name="origin" value="/b/{{ brand }}/youtube">
+          <input type="hidden" name="platform" value="youtube">
+          <button class="btn-soft">↻ Regenerate</button>
+        </form>
+        <form method="post" action="/posts/{{ p['id'] }}/delete"
+              onsubmit="return confirm('Delete?')">
+          <input type="hidden" name="origin" value="/b/{{ brand }}/youtube">
+          <button class="btn-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card muted">Nothing yet — generate your first YouTube package above.</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,22 @@
+# secrets & local config
+.env
+data/
+!data/.gitkeep
+uploads/
+*.db
+yt_token*.json
+client_secret*.json
+
+# python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# dependencies
+vendor/
+node_modules/
+
+# logs
+*.log
+logs/

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Social Agent{% endblock %} — Social Agent</title>
+<style>
+:root{
+  --bg:#f5f6fa; --surface:#ffffff; --line:#e6e8f0; --txt:#1a1d29; --muted:#6b7085;
+  --accent:#2d5bff; --accent-soft:#eaefff; --green:#0f9d58; --amber:#c78a00;
+  --red:#d9364c; --radius:14px; --shadow:0 1px 3px rgba(20,24,40,.06),0 4px 16px rgba(20,24,40,.05);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--txt);font-size:15px}
+a{color:inherit;text-decoration:none}
+.layout{display:flex;min-height:100vh}
+/* sidebar */
+.side{width:230px;background:#12141f;color:#c8cbe0;padding:1.2rem .9rem;display:flex;flex-direction:column;gap:.25rem;flex-shrink:0}
+.side .logo{font-weight:700;font-size:1.05rem;color:#fff;padding:.4rem .6rem 1.1rem;letter-spacing:.3px}
+.side .logo span{color:#8f9bff}
+.side a.nav{display:flex;align-items:center;gap:.65rem;padding:.6rem .7rem;border-radius:10px;font-size:.92rem;transition:background .15s}
+.side a.nav:hover{background:#1d2030}
+.side a.nav.active{background:#262a3d;color:#fff}
+.side .chip{width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:#fff}
+.side .sep{margin:.9rem .6rem .5rem;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#5a5f78}
+.side .bottom{margin-top:auto;padding:.6rem .7rem;font-size:.8rem;color:#7a7f99}
+.side .bottom a{color:#9aa1c4}
+/* main */
+.main{flex:1;padding:1.6rem 2rem;max-width:1150px}
+.pagehead{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem;gap:1rem;flex-wrap:wrap}
+.pagehead h1{font-size:1.35rem;margin:0;display:flex;align-items:center;gap:.6rem}
+.badge{padding:.2rem .6rem;border-radius:99px;font-size:.72rem;font-weight:600}
+.b-draft{background:#eef0f6;color:#555c74}.b-scheduled{background:#fff3d6;color:#8a6100}
+.b-published{background:#e0f5e9;color:#0f7a44}.b-failed{background:#fde5e9;color:#b22745}
+.b-sent{background:#e0f5e9;color:#0f7a44}.b-pending{background:#fff3d6;color:#8a6100}
+.b-skipped{background:#eef0f6;color:#555c74}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.2rem 1.3rem;margin-bottom:1.1rem}
+.card h2{font-size:1rem;margin:0 0 .9rem}
+textarea,input[type=text],input[type=password],input[type=datetime-local]{width:100%;padding:.6rem .7rem;border:1px solid var(--line);border-radius:10px;font-size:.9rem;font-family:inherit;background:#fbfbfd;color:var(--txt)}
+textarea{min-height:90px;resize:vertical;line-height:1.45}
+textarea:focus,input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+button,.btn{border:none;border-radius:10px;padding:.55rem 1rem;font-size:.87rem;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s}
+button:hover{opacity:.88}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-soft{background:var(--accent-soft);color:var(--accent)}
+.btn-ghost{background:#eef0f6;color:#555c74}
+.btn-danger{background:#fde5e9;color:#b22745}
+.btn-green{background:#e0f5e9;color:#0f7a44}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted);font-size:.82rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}.main{padding:1rem}.side{width:64px}.side .logo,.side .navlabel,.side .sep,.side .bottom{display:none}}
+img.thumb,video.thumb{width:100%;max-width:180px;border-radius:10px;object-fit:cover;aspect-ratio:1;background:#eee}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+td,th{padding:.6rem .5rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.stat{display:flex;flex-direction:column;gap:.2rem}
+.stat .num{font-size:1.7rem;font-weight:700}
+.stat .lbl{font-size:.78rem;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.2rem}
+.charcount{font-size:.75rem;color:var(--muted);text-align:right;margin-top:.25rem}
+.charcount.over{color:#b22745;font-weight:700}
+.dropzone{border:2px dashed var(--line);border-radius:12px;padding:1.4rem;text-align:center;color:var(--muted);cursor:pointer;transition:border-color .2s}
+.dropzone:hover{border-color:var(--accent)}
+.dropzone input{display:none}
+.platform-checks{display:flex;gap:.9rem;flex-wrap:wrap;margin:.7rem 0}
+.platform-checks label{display:flex;align-items:center;gap:.4rem;font-size:.86rem;cursor:pointer}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+<div class="layout">
+  <nav class="side">
+    <div class="logo">Social<span>Agent</span></div>
+    <a class="nav {{ 'active' if active=='overview' }}" href="/">
+      <span class="chip" style="background:#3d4466">◈</span><span class="navlabel">Overview</span></a>
+    {% for bkey, b in brands.items() %}
+    <div class="sep">{{ b.name }}</div>
+    <a class="nav {{ 'active' if active == bkey ~ ':instagram' }}" href="/b/{{ bkey }}/instagram">
+      <span class="chip" style="background:#E1306C">IG</span>
+      <span class="navlabel">Instagram</span></a>
+    <a class="nav {{ 'active' if active == bkey ~ ':facebook' }}" href="/b/{{ bkey }}/facebook">
+      <span class="chip" style="background:#1877F2">FB</span>
+      <span class="navlabel">Facebook</span></a>
+    <a class="nav {{ 'active' if active == bkey ~ ':tiktok' }}" href="/b/{{ bkey }}/tiktok">
+      <span class="chip" style="background:#00c3b5">TT</span>
+      <span class="navlabel">TikTok</span></a>
+    <a class="nav {{ 'active' if active == bkey ~ ':youtube' }}" href="/b/{{ bkey }}/youtube">
+      <span class="chip" style="background:#FF0000">YT</span>
+      <span class="navlabel">YouTube</span></a>
+    {% endfor %}
+    <div class="sep">Replies</div>
+    <a class="nav {{ 'active' if active=='replies' }}" href="/replies">
+      <span class="chip" style="background:#3d4466">💬</span><span class="navlabel">All replies</span></a>
+    <a class="nav {{ 'active' if active=='replies-yt' }}" href="/replies?platform=youtube">
+      <span class="chip" style="background:#FF0000">YT</span><span class="navlabel">YouTube</span></a>
+    <a class="nav {{ 'active' if active=='replies-meta' }}" href="/replies?platform=meta">
+      <span class="chip" style="background:linear-gradient(135deg,#E1306C,#1877F2)">IF</span><span class="navlabel">Insta + Facebook</span></a>
+    <a class="nav {{ 'active' if active=='dms' }}" href="/dms">
+      <span class="chip" style="background:#3d4466">✉</span><span class="navlabel">DMs</span></a>
+    {% if master or admin %}<div class="sep">Audit</div>{% endif %}
+    {% if master %}
+    <a class="nav {{ 'active' if active=='activity' }}" href="/activity">
+      <span class="chip" style="background:#3d4466">📜</span><span class="navlabel">Activity log</span></a>
+    {% endif %}
+    {% if admin %}
+    <a class="nav {{ 'active' if active=='users' }}" href="/users">
+      <span class="chip" style="background:#3d4466">👤</span><span class="navlabel">Users</span></a>
+    {% endif %}
+    <div class="bottom">{{ user }} · <b>{{ reply_mode }}</b> · <a href="/logout">Log out</a></div>
+  </nav>
+  <main class="main">{% block content %}{% endblock %}</main>
+</div>
+<script>
+function copyText(btn, id){
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.value).then(()=>{
+    const t = btn.textContent; btn.textContent = 'Copied ✓';
+    setTimeout(()=>btn.textContent=t, 1500);
+  });
+}
+function countChars(el, counterId, max){
+  const c = document.getElementById(counterId);
+  c.textContent = el.value.length + (max ? ' / ' + max : ' chars');
+  if(max && el.value.length > max) c.classList.add('over'); else c.classList.remove('over');
+}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

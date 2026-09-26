@@ -1,0 +1,12 @@
+fastapi==0.115.*
+uvicorn[standard]==0.30.*
+python-multipart
+jinja2
+httpx
+anthropic>=0.40.0
+apscheduler==3.10.*
+python-dotenv
+itsdangerous
+google-api-python-client
+google-auth-oauthlib
+pymysql

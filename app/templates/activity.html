@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Activity{% endblock %}
+{% block content %}
+<div class="pagehead"><h1>Activity log</h1>
+  <a class="btn btn-soft" style="display:inline-block;padding:.55rem 1rem"
+     href="/activity.csv?brand={{ f_brand }}&kind={{ f_kind }}&range={{ f_range }}">⬇ Export CSV</a>
+</div>
+
+<div class="card">
+  <form method="get" action="/activity" class="row" style="gap:.7rem">
+    <select name="brand" class="filter">
+      <option value="">All brands</option>
+      {% for bk, b in brands.items() %}
+      <option value="{{ bk }}" {{ 'selected' if f_brand==bk }}>{{ b.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="kind" class="filter">
+      <option value="">All actions</option>
+      {% for k in ['comment_reply','comment_skip','dm_reply','dm_skip','publish','captions','error'] %}
+      <option value="{{ k }}" {{ 'selected' if f_kind==k }}>{{ k.replace('_',' ') }}</option>
+      {% endfor %}
+    </select>
+    <select name="range" class="filter">
+      <option value="today" {{ 'selected' if f_range=='today' }}>Today</option>
+      <option value="7d" {{ 'selected' if f_range=='7d' }}>Last 7 days</option>
+      <option value="30d" {{ 'selected' if f_range=='30d' }}>Last 30 days</option>
+      <option value="all" {{ 'selected' if f_range=='all' }}>All time</option>
+    </select>
+    <input type="text" name="q" value="{{ f_q }}" placeholder="Search…" style="width:180px">
+    <button class="btn-primary">Filter</button>
+    <a href="/activity" class="btn btn-ghost" style="display:inline-block;padding:.55rem 1rem">Reset</a>
+  </form>
+</div>
+
+<div class="card" style="overflow-x:auto">
+  <table>
+    <tr><th>Time (UTC)</th><th>Who</th><th>Brand</th><th>Platform</th><th>Action</th><th>Target</th><th>Detail</th></tr>
+    {% for r in rows %}
+    <tr>
+      <td class="muted" style="white-space:nowrap">{{ r['created_at'][5:16] }}</td>
+      <td><b style="font-size:.82rem">{{ r['username'] or 'agent' }}</b></td>
+      <td>{{ brands[r['brand']].name if r['brand'] in brands else r['brand'] }}</td>
+      <td>{{ r['platform'] }}</td>
+      <td><span class="badge {{ 'b-sent' if 'reply' in r['kind'] or r['kind']=='publish' else 'b-failed' if r['kind']=='error' else 'b-skipped' }}">{{ r['kind'].replace('_',' ') }}</span></td>
+      <td style="white-space:nowrap">{{ r['target'] }}</td>
+      <td style="max-width:420px">{{ r['detail'] }}</td>
+    </tr>
+    {% else %}<tr><td colspan="7" class="muted">No activity recorded yet.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}
+{% block head %}<style>select.filter{padding:.55rem .6rem;border:1px solid var(--line);border-radius:10px;font-size:.87rem;background:#fbfbfd;color:var(--txt)}</style>{% endblock %}
